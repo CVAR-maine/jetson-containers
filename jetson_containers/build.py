@@ -65,6 +65,7 @@ parser.add_argument('--skip-tests', type=str, default='', help="comma-separated 
 parser.add_argument('--test-only', type=str, default='', help="only test the specified packages (comma/colon-separated list)")
 
 parser.add_argument('--simulate', action='store_true', help="print out the build commands without actually building the containers")
+parser.add_argument('--rebuild', action='store_true', help="rebuild every stage, even if an image with that stage's tag already exists locally")
 parser.add_argument('--push', type=str, default='', help="repo or user to push built container image to (no push by default)")
 parser.add_argument('--no-github-api', action='store_true', help="disable GitHub API use to force rebuild on new git commits")
 

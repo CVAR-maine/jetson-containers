@@ -4,7 +4,7 @@
 set -ex
 
 ROOT="$(dirname "$(readlink -f "$0")")"
-INSTALL_PREFIX="/usr/local/bin"
+INSTALL_PREFIX="$HOME/.local/bin"
 LSB_RELEASE="$(lsb_release -rs)"
 
 # use virtualenv if 24.04
@@ -28,8 +28,8 @@ pip3 --version || sudo apt-get install -y python3-pip
 pip3 install -r "$ROOT/requirements.txt"
 
 # link scripts to path
-sudo ln -sf "$ROOT/autotag" "$INSTALL_PREFIX/autotag"
-sudo ln -sf "$ROOT/jetson-containers" "$INSTALL_PREFIX/jetson-containers"
+ln -sf "$ROOT/autotag" "$INSTALL_PREFIX/autotag"
+ln -sf "$ROOT/jetson-containers" "$INSTALL_PREFIX/jetson-containers"
 
 # create a default env
 if [ ! -f "${ROOT}/.env" ]; then

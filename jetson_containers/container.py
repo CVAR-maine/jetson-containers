@@ -206,7 +206,7 @@ def build_container(
         ccache: bool=True,
         ccache_dir: str=_DEFAULT_CCACHE_DIR, ccache_maxsize: str=_DEFAULT_CCACHE_MAXSIZE,
         build_flags: str='',
-        build_args: dict=None, simulate: bool=False,
+        build_args: dict=None, simulate: bool=False, rebuild: bool=False,
         skip_packages: list=[], skip_tests: list=[], test_only: list=[],
         push: str='', no_github_api=False, **kwargs
     ):
@@ -229,6 +229,7 @@ def build_container(
       ccache_maxsize (str) -- maximum ccache size inside build containers
       build_flags (str) -- arguments to add to the 'docker build' command
       simulate (bool) -- if true, just print out the commands that would have been run
+      rebuild (bool) -- if true, rebuild every stage even if an image with its tag already exists
       skip_packages (list[str]) -- list of packages to skip from the build
       skip_tests (list[str]) -- list of tests to skip (or 'all' or 'intermediate')
       test_only (list[str]) -- only test these specified packages, skipping all other tests
@@ -330,7 +331,10 @@ def build_container(
             # generate the logging file (without the extension)
             log_file = os.path.join(get_log_dir('build'), f"{idx+1:02d}o{len(packages)}_{container_name.replace('/','_')}").replace(':','_')
             jetpack_version = get_jetpack_version()
-            if 'dockerfile' in pkg:
+            stage_exists = not rebuild and container_image_exists(container_name)
+            if stage_exists:
+                log_status(f"[{idx+1}/{len(packages)}] Skipping {package} ({container_name}) - image already exists")
+            elif 'dockerfile' in pkg:
                 dockerfilepath = os.path.join(pkg['path'], pkg['dockerfile'])
 
                 if no_github_api:
@@ -479,8 +483,8 @@ def build_container(
             else:
                 tag_container(base, container_name, simulate)
 
-            # run tests on the intermediate container
-            if package not in skip_tests and 'intermediate' not in skip_tests and 'all' not in skip_tests:
+            # run tests on the intermediate container (skip if the stage was reused)
+            if not stage_exists and package not in skip_tests and 'intermediate' not in skip_tests and 'all' not in skip_tests:
                 if len(test_only) == 0 or package in test_only:
                     status_text = f"[{idx+1}/{len(packages)}] Testing {package} ({container_name})"
                     current_time = datetime.datetime.now().strftime("%H:%M:%S")
@@ -612,6 +616,15 @@ def tag_container(source, target, simulate=False):
 
     if not simulate:
         subprocess.run(cmd, shell=True, check=True)
+
+
+def container_image_exists(name):
+    """
+    Return True if a container image with this name/tag exists in the local Docker image store.
+    """
+    cmd = f"{sudo_prefix()}docker image inspect --format '{{{{.Id}}}}' {shlex.quote(name)}"
+    result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return result.returncode == 0
 
 
 def push_container(name, repository='', simulate=False):
