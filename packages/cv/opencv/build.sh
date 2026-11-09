@@ -14,7 +14,7 @@ git clone --branch "${OPENCV_VERSION}" --recursive https://github.com/opencv/ope
   || git clone --recursive https://github.com/opencv/opencv_contrib
 
 git clone --branch "${OPENCV_PYTHON}" --recursive https://github.com/opencv/opencv-python \
-  || git clone --recursive https://github.com/opencv/opencv-python && export ENABLE_ROLLING=1
+  || { git clone --recursive https://github.com/opencv/opencv-python && export ENABLE_ROLLING=1; }
 
 cd /opt/opencv-python/opencv || git checkout --recurse-submodules origin/4.x
 git checkout --recurse-submodules ${OPENCV_VERSION} || git checkout --recurse-submodules origin/4.x
@@ -97,7 +97,7 @@ export CMAKE_LIBRARY_PATH=/usr/local/cuda/lib64/stubs
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 export ENABLE_CONTRIB=1
 # export ENABLE_ROLLING=1 # Build from last commit
-# export OPENCV_PYTHON_SKIP_GIT_COMMANDS=1
+export OPENCV_PYTHON_SKIP_GIT_COMMANDS=1
 
 # Install dependencies for building the wheel
 uv pip install scikit-build
